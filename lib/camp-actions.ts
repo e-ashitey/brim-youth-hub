@@ -15,8 +15,8 @@ interface RegistrationInput {
     attendee_type: "VISITOR" | "MEMBER"
     branch: string
     attendance_date: string
-    emergency_contact_name: string
-    emergency_contact_number: string
+    emergency_contact_name?: string
+    emergency_contact_number?: string
 }
 
 export async function registerForCamp(data: RegistrationInput) {
