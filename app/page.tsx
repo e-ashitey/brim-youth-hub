@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { UserCircle, Tent } from "lucide-react"
+import { UserCircle, Tent, Settings } from "lucide-react"
 
 export default function Home() {
   return (
