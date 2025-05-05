@@ -43,11 +43,11 @@ export default function Home() {
                   asChild
                   className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 h-auto py-6"
                 >
-                  <Link href="/member-info">
-                    <UserCircle className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
+                  <Link href="/member-info" className="flex items-center">
+                    <UserCircle className="mr-4 h-5 w-5" />
+                    <div className="flex flex-col items-start text-left">
                       <span className="text-lg font-semibold">Member Information System</span>
-                      <span className="text-xs text-left">Update your personal information</span>
+                      <span className="text-xs">Update your personal information</span>
                     </div>
                   </Link>
                 </Button>
@@ -56,13 +56,13 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
                 <Button
                   asChild
-                  className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 h-auto py-6"
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-auto py-6"
                 >
-                  <Link href="/camp-registration">
-                    <Tent className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
+                  <Link href="/camp-registration" className="flex items-center">
+                    <Tent className="mr-4 h-5 w-5" />
+                    <div className="flex flex-col items-start text-left">
                       <span className="text-lg font-semibold">Camp Registration</span>
-                      <span className="text-xs text-left">Register for our upcoming camp</span>
+                      <span className="text-xs">Register for our upcoming camp</span>
                     </div>
                   </Link>
                 </Button>
