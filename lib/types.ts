@@ -45,7 +45,7 @@ export interface CampRegistration {
   attendee_type: "VISITOR" | "MEMBER"
   branch: string
   attendance_date: string
-  emergency_contact_name: string
-  emergency_contact_number: string
+  emergency_contact_name?: string
+  emergency_contact_number?: string
   created_at: string
 }
