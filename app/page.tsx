@@ -1,10 +1,11 @@
 "use client"
 
-import { Suspense } from "react"
-import { UserLookupForm } from "@/components/user-lookup-form"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
+import Link from "next/link"
 import { motion } from "framer-motion"
+import { UserCircle, Tent } from "lucide-react"
 
 export default function Home() {
   return (
@@ -33,13 +34,39 @@ export default function Home() {
         >
           <Card className="shadow-lg border-t-4 border-t-orange-500">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-slate-800">Member Information System</CardTitle>
-              <CardDescription>Enter your email or phone number to access your information</CardDescription>
+              <CardTitle className="text-2xl font-bold text-slate-800">Welcome</CardTitle>
+              <CardDescription>Choose a service to continue</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Suspense fallback={<div className="flex justify-center py-4">Loading...</div>}>
-                <UserLookupForm />
-              </Suspense>
+            <CardContent className="space-y-4">
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
+                <Button
+                  asChild
+                  className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 h-auto py-6"
+                >
+                  <Link href="/member-info">
+                    <UserCircle className="mr-2 h-5 w-5" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-lg font-semibold">Member Information System</span>
+                      <span className="text-xs text-left">Update your personal information</span>
+                    </div>
+                  </Link>
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
+                <Button
+                  asChild
+                  className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 h-auto py-6"
+                >
+                  <Link href="/camp-registration">
+                    <Tent className="mr-2 h-5 w-5" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-lg font-semibold">Camp Registration</span>
+                      <span className="text-xs text-left">Register for our upcoming camp</span>
+                    </div>
+                  </Link>
+                </Button>
+              </motion.div>
             </CardContent>
           </Card>
         </motion.div>
