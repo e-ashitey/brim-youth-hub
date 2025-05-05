@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { User } from "@/lib/types"
-import { ArrowLeft, Pencil } from "lucide-react"
+import { Home, Pencil } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -44,8 +44,8 @@ export function UserProfile({ user }: UserProfileProps) {
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button asChild variant="outline">
               <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                <Home className="mr-2 h-4 w-4" />
+                Home
               </Link>
             </Button>
           </motion.div>
@@ -77,31 +77,31 @@ export function UserProfile({ user }: UserProfileProps) {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Full Name:</p>
+                  <p className="text-sm font-bold">Full Name:</p>
                   <p className="text-sm">{user.full_name}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Gender:</p>
+                  <p className="text-sm font-bold">Gender:</p>
                   <p className="text-sm">{user.gender || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Date of Birth:</p>
+                  <p className="text-sm font-bold">Date of Birth:</p>
                   <p className="text-sm">{user.dob ? formatDate(user.dob) : "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Email:</p>
+                  <p className="text-sm font-bold">Email:</p>
                   <p className="text-sm">{user.email}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Phone Number:</p>
+                  <p className="text-sm font-bold">Phone Number:</p>
                   <p className="text-sm">{user.phone_number}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">WhatsApp Number:</p>
+                  <p className="text-sm font-bold">WhatsApp Number:</p>
                   <p className="text-sm">{user.whatsapp_number || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Marital Status:</p>
+                  <p className="text-sm font-bold">Marital Status:</p>
                   <p className="text-sm">{user.marital_status || "Not provided"}</p>
                 </div>
               </CardContent>
@@ -113,27 +113,27 @@ export function UserProfile({ user }: UserProfileProps) {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Digital Address:</p>
+                  <p className="text-sm font-bold">Digital Address:</p>
                   <p className="text-sm">{user.digital_address || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Location:</p>
+                  <p className="text-sm font-bold">Location:</p>
                   <p className="text-sm">{user.location || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Occupation Status:</p>
+                  <p className="text-sm font-bold">Occupation Status:</p>
                   <p className="text-sm">{user.occupation_status || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Organization:</p>
+                  <p className="text-sm font-bold">Organization:</p>
                   <p className="text-sm">{user.organization || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Branch:</p>
+                  <p className="text-sm font-bold">Branch:</p>
                   <p className="text-sm">{user.branch || "Not provided"}</p>
                 </div>
                 <div className="grid grid-cols-2">
-                  <p className="text-sm font-medium">Member Since:</p>
+                  <p className="text-sm font-bold">Member Since:</p>
                   <p className="text-sm">{formatDate(user.created_at)}</p>
                 </div>
               </CardContent>
@@ -271,8 +271,6 @@ function UpdateRequestForm({ user, onCancel }: { user: User; onCancel: () => voi
                       <SelectContent>
                         <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -443,11 +441,10 @@ function UpdateRequestForm({ user, onCancel }: { user: User; onCancel: () => voi
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Central Branch">Central Branch</SelectItem>
-                        <SelectItem value="East Branch">East Branch</SelectItem>
-                        <SelectItem value="West Branch">West Branch</SelectItem>
-                        <SelectItem value="North Branch">North Branch</SelectItem>
-                        <SelectItem value="South Branch">South Branch</SelectItem>
+                        <SelectItem value="La">La</SelectItem>
+                        <SelectItem value="Budumburam">Budumburam</SelectItem>
+                        <SelectItem value="Domeabra">Domeabra</SelectItem>
+                        <SelectItem value="UK">UK</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
