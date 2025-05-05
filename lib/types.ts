@@ -35,3 +35,17 @@ export interface UpdateRequest {
   status: "pending" | "approved" | "rejected"
   created_at: string
 }
+
+export interface CampRegistration {
+  id: string
+  full_name: string
+  email: string
+  phone_number: string
+  gender: string
+  attendee_type: "VISITOR" | "MEMBER"
+  branch: string
+  attendance_date: string
+  emergency_contact_name: string
+  emergency_contact_number: string
+  created_at: string
+}
