@@ -4,10 +4,10 @@ import { getUserById } from "@/lib/actions"
 import { UserProfile } from "@/components/user-profile"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import Link from "next/link"
 
 export default async function ProfilePage({ params }: { params: { id: string } }) {
-  const userData = await getUserById(params.id)
+  const { id } = await params
+  const userData = await getUserById(id)
 
   if (!userData) {
     notFound()
@@ -35,7 +35,6 @@ export default async function ProfilePage({ params }: { params: { id: string } }
             <Suspense fallback={<div className="flex justify-center py-4">Loading profile...</div>}>
               <UserProfile user={userData} />
             </Suspense>
-            <Link href="/member-info">Back to Member Info</Link>
           </CardContent>
         </Card>
       </div>
