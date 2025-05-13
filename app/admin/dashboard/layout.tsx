@@ -1,28 +1,36 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, ClipboardEdit, Tent, Settings, LogOut, Menu, X, Moon, Sun } from "lucide-react"
+import { LayoutDashboard, Users, ClipboardEdit, Tent, Settings, Menu, X, Moon, Sun, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
-import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { useNotification } from "@/components/ui/notification"
+import { supabaseBrowserClient as supabase } from "@/lib/supabase/client"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const { NotificationContainer } = useNotification()
   const [isMounted, setIsMounted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  const handleLogout = async () => {
+    setIsLoading(true)
+    await supabase.auth.signOut()
+    router.push('/admin')
+    setIsLoading(false)
+    // router.refresh()
+  }
 
   const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -31,6 +39,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Camp Registrations", href: "/admin/camp-registrations", icon: Tent },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ]
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    )
+  }
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
@@ -63,11 +79,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="fixed inset-0 bg-black/50" onClick={closeMobileMenu} />
                 <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-lg">
                   <div className="flex flex-col h-full">
-                    <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-                      <div className="relative h-10 w-10 mr-2">
-                        <Image src="/logo.png" alt="Logo" fill className="object-contain" />
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                          B
+                        </div>
+                        <span className="text-lg font-semibold">BRIM</span>
                       </div>
-                      <h1 className="text-lg font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+                      <div className="flex items-center space-x-2">
+                        {/* <LogoutButton /> */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="lg:hidden"
+                            onClick={closeMobileMenu}
+                        >
+                          <LogOut className="h-5 w-5" />
+                        </Button>
+                      </div>
                     </div>
                     <nav className="flex-1 px-2 py-4 space-y-1">
                       {navigation.map((item) => (
@@ -101,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           className="w-full justify-start"
                           onClick={() => {
                             // Handle logout
-                            closeMobileMenu()
+                            handleLogout()
                           }}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
@@ -119,7 +148,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex flex-col flex-grow bg-white dark:bg-gray-800 shadow">
             <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
               <div className="relative h-10 w-10 mr-2">
-                <Image src="/logo.png" alt="Logo" fill className="object-contain" />
+                {/* <Image src="/logo.png" alt="Logo" fill className="object-contain" /> */}
               </div>
               <h1 className="text-lg font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
             </div>
@@ -149,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ))}
               </nav>
               <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
                 </Button>
