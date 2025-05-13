@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -10,10 +11,12 @@ import { useNotification } from "@/components/ui/notification"
 import { getMockDashboardData } from "@/lib/mock-dashboard-data"
 import { DashboardChart } from "@/components/dashboard-chart"
 import { RecentActivityList } from "@/components/recent-activity-list"
+import { supabase } from "@/lib/supabase/client"
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  // const [isAuthenticated, setIsAuthenticated] = useState(true)
   const { showNotification } = useNotification()
 
   useEffect(() => {
@@ -22,6 +25,7 @@ export default function DashboardPage() {
         // In a real app, this would be an API call
         const data = getMockDashboardData()
         setDashboardData(data)
+
       } catch (error) {
         showNotification({
           title: "Error",
@@ -35,7 +39,6 @@ export default function DashboardPage() {
     }
 
     fetchData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (isLoading) {
