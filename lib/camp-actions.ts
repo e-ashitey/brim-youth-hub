@@ -1,11 +1,8 @@
 "use server"
 
-import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
-import type { CampRegistration } from "./types"
-
-// Mock storage for camp registrations
-const campRegistrations: CampRegistration[] = []
+import { createServerClient } from "./supabase/server"
+import { CampRegistrationValues } from "./schemas/camp-registration"
 
 interface RegistrationInput {
     full_name: string
@@ -21,33 +18,73 @@ interface RegistrationInput {
 
 export async function registerForCamp(data: RegistrationInput) {
     try {
+        const supabase = createServerClient()
+
         // Create a new registration
-        const newRegistration: CampRegistration = {
-            id: uuidv4(),
-            ...data,
-            created_at: new Date().toISOString(),
+        const { data: registration, error } = await supabase
+            .from("camp_2025")
+            .insert({
+                full_name: data.full_name,
+                email: data.email,
+                phone_number: data.phone_number,
+                gender: data.gender,
+                attendee_type: data.attendee_type,
+                branch: data.branch,
+                attendance_date: data.attendance_date,
+                emergency_contact_name: data.emergency_contact_name || null,
+                emergency_contact_number: data.emergency_contact_number || null,
+            })
+            .select()
+            .single()
+
+        if (error) {
+            console.error("Error registering for camp:", error)
+            return { success: false, error: error.message }
         }
 
-        // Add to mock data
-        campRegistrations.push(newRegistration)
-
-        // Simulate admin notification
-        console.log("New camp registration:", newRegistration)
-
         revalidatePath("/camp-registration")
-        return { success: true, registrationId: newRegistration.id }
-    } catch (error) {
+        return { success: true, data: registration }
+    } catch (error: any) {
         console.error("Error registering for camp:", error)
-        return { success: false, error: "An error occurred" }
+        return { success: false, error: error.message || "An error occurred" }
     }
 }
 
 export async function getCampRegistrationById(id: string) {
     try {
-        const registration = campRegistrations.find((r) => r.id === id)
-        return registration || null
+        const supabase = createServerClient()
+
+        const { data: registration, error } = await supabase.from("camp_2025").select("*").eq("id", id).single()
+
+        if (error) {
+            console.error("Error fetching registration:", error)
+            return null
+        }
+
+        return registration
     } catch (error) {
         console.error("Error fetching registration:", error)
         return null
+    }
+}
+
+export async function findUserByPhone(phoneNumber: string) {
+    try {
+        const supabase = createServerClient()
+
+        const { data: user, error } = await supabase
+            .from("members")
+            .select("*")
+            .or(`phone_number.eq.${phoneNumber},whatsapp_number.eq.${phoneNumber}`)
+            .single()
+
+        if (error || !user) {
+            return { success: false, error: "User not found" }
+        }
+
+        return { success: true, userId: user.id, userData: user }
+    } catch (error: any) {
+        console.error("Error finding user:", error)
+        return { success: false, error: error.message || "An error occurred" }
     }
 }
