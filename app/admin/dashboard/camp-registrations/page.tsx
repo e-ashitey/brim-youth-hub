@@ -16,40 +16,114 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useNotification } from "@/components/ui/notification"
-import { getMockCampRegistrations } from "@/lib/mock-dashboard-data"
 import { Search, Filter, MoreHorizontal, Download, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
+import { supabase } from "@/lib/supabase/client"
+
+type CampRegistration = {
+  id: string
+  full_name: string
+  email: string
+  phone_number: string
+  gender: string
+  attendee_type: "VISITOR" | "MEMBER"
+  branch: string
+  attendance_date: string
+  emergency_contact_name?: string
+  emergency_contact_number?: string
+  created_at: string
+  attended: boolean
+  registration_number?: string
+  payment_status?: 'PENDING' | 'PAID' | 'FAILED'
+  attended_at?: string
+}
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
 
 export default function CampRegistrationsPage() {
-  const [registrations, setRegistrations] = useState<any[]>([])
-  const [filteredRegistrations, setFilteredRegistrations] = useState<any[]>([])
+  const [registrations, setRegistrations] = useState<CampRegistration[]>([])
+  const [filteredRegistrations, setFilteredRegistrations] = useState<CampRegistration[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
   const { showNotification } = useNotification()
 
-  useEffect(() => {
-    const fetchRegistrations = async () => {
-      try {
-        // In a real app, this would be an API call
-        const data = getMockCampRegistrations()
-        setRegistrations(data)
-        setFilteredRegistrations(data)
-      } catch (error) {
-        showNotification({
-          title: "Error",
-          description: "Failed to load camp registrations",
-          variant: "error",
-          position: "topRight",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  const fetchRegistrations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('camp_2025')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    fetchRegistrations()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+      if (error) throw error;
+
+      setRegistrations(data || []);
+      setFilteredRegistrations(data || []);
+    } catch (error) {
+      console.error('Error fetching registrations:', error);
+      showNotification({
+        title: "Error",
+        description: "Failed to load camp registrations",
+        variant: "error",
+        position: "topRight",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, []);
+
+  const handleCheckIn = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('camp_2025')
+        .update({ 
+          attended: true,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setRegistrations(prev => 
+        prev.map(reg => 
+          reg.id === id 
+            ? { ...reg, attended: true, attended_at: new Date().toISOString() } 
+            : reg
+        )
+      );
+      setFilteredRegistrations(prev => 
+        prev.map(reg => 
+          reg.id === id 
+            ? { ...reg, attended: true, attended_at: new Date().toISOString() } 
+            : reg
+        )
+      );
+
+      showNotification({
+        title: "Success",
+        description: "Attendee marked as attended",
+        variant: "success",
+        position: "topRight",
+      });
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      showNotification({
+        title: "Error",
+        description: "Failed to update attendance",
+        variant: "error",
+        position: "topRight",
+      });
+    }
+  };
 
   useEffect(() => {
     let result = registrations
@@ -78,20 +152,6 @@ export default function CampRegistrationsPage() {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
-
-  const handleCheckIn = (id: string) => {
-    // In a real app, this would be an API call
-    const updatedRegistrations = registrations.map((registration) =>
-      registration.id === id ? { ...registration, checked_in: true } : registration,
-    )
-    setRegistrations(updatedRegistrations)
-    showNotification({
-      title: "Checked In",
-      description: "Attendee has been checked in successfully.",
-      variant: "success",
-      position: "topRight",
     })
   }
 
@@ -195,9 +255,9 @@ export default function CampRegistrationsPage() {
                           {registration.attendee_type === "MEMBER" ? "Member" : "Visitor"}
                         </Badge>
                       </TableCell>
-                      <TableCell>{registration.attendance_date}</TableCell>
+                      <TableCell>{formatDate(registration.attendance_date)}</TableCell>
                       <TableCell>
-                        {registration.checked_in ? (
+                        {registration.attended ? (
                           <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
                             Checked In
                           </Badge>
@@ -208,7 +268,7 @@ export default function CampRegistrationsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {!registration.checked_in ? (
+                        {!registration.attended ? (
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Button
                               variant="outline"
