@@ -16,27 +16,6 @@ import { motion } from "framer-motion"
 import { useNotification } from "@/components/ui/notification"
 import { debounce, result } from "lodash"
 
-
-type MemberFormValues = {
-    phone_number: string;
-    attendance_date: string;
-    emergency_contact_name?: string;
-    emergency_contact_number?: string;
-    attendee_type: "MEMBER";
-};
-
-type VisitorFormValues = {
-    full_name: string;
-    email: string;
-    phone_number: string;
-    gender: string;
-    branch: string;
-    attendance_date: string;
-    emergency_contact_name?: string;
-    emergency_contact_number?: string;
-    attendee_type: "VISITOR";
-};
-
 export function CampRegistrationForm() {
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
