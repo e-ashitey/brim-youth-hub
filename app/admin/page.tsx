@@ -1,16 +1,15 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { useNotification } from "@/components/ui/notification"
 import { motion } from "framer-motion"
-import Image from "next/image"
+import { supabaseBrowserClient as supabase } from "@/lib/supabase/client"
+import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
     const router = useRouter()
@@ -19,24 +18,30 @@ export default function LoginPage() {
     const [password, setPassword] = useState("")
     const { showNotification, NotificationContainer } = useNotification()
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
 
-        // Simulate authentication
-        setTimeout(() => {
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+
+            if (error) throw error
+
+            // Redirect to dashboard or previous page
+            router.push('/admin/dashboard')
+        } catch (error: any) {
+            showNotification({
+                title: "Login Failed",
+                description: error.message || "An error occurred during login",
+                variant: "error",
+                position: "center",
+            })
+        } finally {
             setIsLoading(false)
-            if (email === "admin@example.com" && password === "password") {
-                router.push("/dashboard")
-            } else {
-                showNotification({
-                    title: "Login Failed",
-                    description: "Invalid email or password. Please try again.",
-                    variant: "error",
-                    position: "center",
-                })
-            }
-        }, 1500)
+        }
     }
 
     return (
@@ -48,8 +53,10 @@ export default function LoginPage() {
                 className="w-full max-w-md"
             >
                 <div className="flex justify-center mb-6">
-                    <div className="relative h-24 w-24">
-                        <Image src="/logo.png" alt="Bushfire Revival International Ministry" fill className="object-contain" />
+                    <div className="relative h-16 w-16">
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-2xl font-bold text-white">
+                            BRIM
+                        </div>
                     </div>
                 </div>
 
