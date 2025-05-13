@@ -18,7 +18,7 @@ interface RegistrationInput {
 
 export async function registerForCamp(data: RegistrationInput) {
     try {
-        const supabase = createServerClient()
+        const supabase = await createServerClient()
 
         // Create a new registration
         const { data: registration, error } = await supabase
@@ -52,7 +52,7 @@ export async function registerForCamp(data: RegistrationInput) {
 
 export async function getCampRegistrationById(id: string) {
     try {
-        const supabase = createServerClient()
+        const supabase = await createServerClient()
 
         const { data: registration, error } = await supabase.from("camp_2025").select("*").eq("id", id).single()
 
@@ -70,7 +70,7 @@ export async function getCampRegistrationById(id: string) {
 
 export async function findUserByPhone(phoneNumber: string) {
     try {
-        const supabase = createServerClient()
+        const supabase = await createServerClient()
 
         const { data: user, error } = await supabase
             .from("members")
