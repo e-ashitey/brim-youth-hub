@@ -9,7 +9,7 @@ export default async function RegistrationSuccessPage({
 }: {
     searchParams: { data: string }
 }) {
-    const data = searchParams?.data;
+    const data = await searchParams?.data;
     
     if (!data) {
         return (
