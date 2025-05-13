@@ -16,23 +16,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useNotification } from "@/components/ui/notification"
 import { supabase } from "@/lib/supabase/client"
-import { UserPlus, MoreHorizontal, Search, Download, Filter } from "lucide-react"
+import { UserPlus, MoreHorizontal, Search, Download, Filter, Eye, Pencil } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { MemberDialog, Member } from "./MemberDialog"
+
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<any[]>([])
-  const [filteredMembers, setFilteredMembers] = useState<any[]>([])
+  const [members, setMembers] = useState<Member[]>([])
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [branchFilter, setBranchFilter] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
+  const [dialogMode, setDialogMode] = useState<'view' | 'edit' | 'create'>('create')
   const { showNotification } = useNotification()
 
   useEffect(() => {
     const fetchMembers = async () => {
       try {
         const { data, error } = await supabase
-          .from('members')
+          .from('members_duplicate')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -86,6 +91,31 @@ export default function MembersPage() {
     })
   }
 
+  const handleRefresh = async () => {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('members_duplicate')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setMembers(data || []);
+      setFilteredMembers(data || []);
+    } catch (error) {
+      console.error('Error refreshing members:', error);
+      showNotification({
+        title: "Error",
+        description: "Failed to refresh members data",
+        variant: "error",
+        position: "topRight",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -96,18 +126,28 @@ export default function MembersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Members</h1>
-          <p className="text-muted-foreground">Manage your church members and their information.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Members</h1>
+          <p className="text-muted-foreground">Manage your members and their details</p>
         </div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add New Member
-          </Button>
-        </motion.div>
+        <Button onClick={() => {
+          setSelectedMember(null)
+          setDialogMode('create')
+          setIsDialogOpen(true)
+        }}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Add Member
+        </Button>
       </div>
+
+      <MemberDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        member={selectedMember}
+        onSuccess={handleRefresh}
+        mode={dialogMode}
+      />
 
       <Card>
         <CardHeader>
@@ -171,25 +211,39 @@ export default function MembersPage() {
                         </div>
                       </TableCell>
                       <TableCell>{member.branch}</TableCell>
-                      <TableCell>{formatDate(member.created_at)}</TableCell>
+                      <TableCell>{formatDate(member.created_at || '')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="ghost" className="h-8 w-8 p-0">
                               <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>
-                              <Link href={`/dashboard/members/${member.id}`} className="flex w-full">
-                                View Details
-                              </Link>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedMember(member)
+                                setDialogMode('edit')
+                                setIsDialogOpen(true)
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Edit Member</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">Delete Member</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedMember(member)
+                                setDialogMode('view')
+                                setIsDialogOpen(true)
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>View Details</span>
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
