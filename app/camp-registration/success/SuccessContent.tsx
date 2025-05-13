@@ -42,9 +42,9 @@ export function SuccessContent({ registration }: { registration: any }) {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="bg-green-50 p-4 rounded-md border border-green-100">
-                                <h3 className="text-2xl font-bold text-center mb-2">Registration Successful!</h3>
+                                {/* <h3 className="text-2xl font-bold text-center mb-2">Registration Successful!</h3> */}
                                 <p className="text-center text-muted-foreground mb-6">
-                                    Thank you for registering for the camp. We look forward to seeing you on {new Date(registration.attendance_date).toLocaleDateString()}!
+                                    We look forward to seeing you on {new Date(registration.attendance_date).toLocaleDateString()}!
                                 </p>
                                 <div className="space-y-4 mb-6">
                                     <div className="grid grid-cols-2 gap-4">
