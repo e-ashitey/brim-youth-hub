@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useNotification } from "@/components/ui/notification"
-import { getMockMembers } from "@/lib/mock-dashboard-data"
+import { supabase } from "@/lib/supabase/client"
 import { UserPlus, MoreHorizontal, Search, Download, Filter } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
@@ -31,25 +31,30 @@ export default function MembersPage() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        // In a real app, this would be an API call
-        const data = getMockMembers()
-        setMembers(data)
-        setFilteredMembers(data)
+        const { data, error } = await supabase
+          .from('members')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        setMembers(data || []);
+        setFilteredMembers(data || []);
       } catch (error) {
+        console.error('Error fetching members:', error);
         showNotification({
           title: "Error",
           description: "Failed to load members data",
           variant: "error",
           position: "topRight",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchMembers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    fetchMembers();
+  }, [showNotification]);
 
   useEffect(() => {
     let result = members
@@ -59,9 +64,9 @@ export default function MembersPage() {
       const query = searchQuery.toLowerCase()
       result = result.filter(
         (member) =>
-          member.full_name.toLowerCase().includes(query) ||
-          member.email.toLowerCase().includes(query) ||
-          member.phone_number.includes(query),
+          (member.full_name?.toLowerCase() || '').includes(query) ||
+          (member.email?.toLowerCase() || '').includes(query) ||
+          (member.phone_number || '').includes(query)
       )
     }
 
