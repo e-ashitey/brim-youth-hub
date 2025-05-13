@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { z } from "zod"
+import { useState, useEffect, useCallback } from "react"
+import { MemberData, DEFAULT_MEMBER_VALUES, DEFAULT_VISITOR_VALUES, visitorSchema, memberSchema, campRegistrationSchema, CampRegistrationValues, RegistrationInput } from "@/lib/schemas/camp-registration"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
@@ -10,38 +10,32 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { registerForCamp } from "@/lib/camp-actions"
-import { findUserByPhone } from "@/lib/actions"
+import { registerForCamp, findUserByPhone } from "@/lib/camp-actions"
 import { Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
 import { useNotification } from "@/components/ui/notification"
+import { debounce, result } from "lodash"
 
-// Schema for visitors (full form)
-const visitorSchema = z.object({
-    full_name: z.string().min(1, { message: "Full name is required" }),
-    email: z.string().email({ message: "Please enter a valid email address" }),
-    phone_number: z.string().min(10, { message: "Please enter a valid phone number" }),
-    gender: z.string().min(1, { message: "Please select your gender" }),
-    attendee_type: z.literal("VISITOR"),
-    branch: z.string().min(1, { message: "Please select your branch" }),
-    attendance_date: z.string().min(1, { message: "Please select which day you will attend" }),
-    emergency_contact_name: z.string().optional(),
-    emergency_contact_number: z.string().optional(),
-})
 
-// Schema for members (simplified form)
-const memberSchema = z.object({
-    phone_number: z.string().min(10, { message: "Please enter a valid phone number" }),
-    attendance_date: z.string().min(1, { message: "Please select which day you will attend" }),
-    emergency_contact_name: z.string().optional(),
-    emergency_contact_number: z.string().optional(),
-    attendee_type: z.literal("MEMBER"),
-})
+type MemberFormValues = {
+    phone_number: string;
+    attendance_date: string;
+    emergency_contact_name?: string;
+    emergency_contact_number?: string;
+    attendee_type: "MEMBER";
+};
 
-// Combined schema with discriminated union
-const campRegistrationSchema = z.discriminatedUnion("attendee_type", [visitorSchema, memberSchema])
-
-type CampRegistrationValues = z.infer<typeof campRegistrationSchema>
+type VisitorFormValues = {
+    full_name: string;
+    email: string;
+    phone_number: string;
+    gender: string;
+    branch: string;
+    attendance_date: string;
+    emergency_contact_name?: string;
+    emergency_contact_number?: string;
+    attendee_type: "VISITOR";
+};
 
 export function CampRegistrationForm() {
     const router = useRouter()
@@ -49,118 +43,96 @@ export function CampRegistrationForm() {
     const [isMember, setIsMember] = useState(false)
     const [isCheckingMember, setIsCheckingMember] = useState(false)
     const [memberFound, setMemberFound] = useState(false)
-    const [memberData, setMemberData] = useState<any>(null)
+    const [memberData, setMemberData] = useState<MemberData | null>(null)
     const { showNotification, NotificationContainer } = useNotification()
 
     const form = useForm<CampRegistrationValues>({
         resolver: zodResolver(campRegistrationSchema),
-        defaultValues: isMember
-            ? {
-                attendee_type: "MEMBER",
-                phone_number: "",
-                attendance_date: "",
-                emergency_contact_name: "",
-                emergency_contact_number: "",
-            }
-            : {
-                attendee_type: "VISITOR",
-                full_name: "",
-                email: "",
-                phone_number: "",
-                gender: "",
-                branch: "",
-                attendance_date: "",
-                emergency_contact_name: "",
-                emergency_contact_number: "",
-            },
+        defaultValues: isMember ? DEFAULT_MEMBER_VALUES : DEFAULT_VISITOR_VALUES,
     })
 
     // Reset form when isMember changes
     useEffect(() => {
-        form.reset(
-            isMember
-                ? {
-                    attendee_type: "MEMBER",
-                    phone_number: "",
-                    attendance_date: "",
-                    emergency_contact_name: "",
-                    emergency_contact_number: "",
-                }
-                : {
-                    attendee_type: "VISITOR",
-                    full_name: "",
-                    email: "",
-                    phone_number: "",
-                    gender: "",
-                    branch: "",
-                    attendance_date: "",
-                    emergency_contact_name: "",
-                    emergency_contact_number: "",
-                },
-        )
+        form.reset(isMember ? DEFAULT_MEMBER_VALUES : DEFAULT_VISITOR_VALUES)
         setMemberFound(false)
         setMemberData(null)
     }, [isMember, form])
 
-    // Check if phone number belongs to a member
-    const checkMember = async (phone: string) => {
-        if (!phone || phone.length < 10) return
+    // Check if phone number belongs to a member with debounce
+    const checkMember = useCallback(
+        debounce(async (phone: string) => {
+            if (!phone || phone.length < 10) return;
 
-        setIsCheckingMember(true)
-        try {
-            const result = await findUserByPhone(phone)
-            if (result.success) {
-                // Fetch member data
-                const userData = await fetch(`/api/members/${result.userId}`).then((res) => res.json())
-                setMemberFound(true)
-                setMemberData(userData)
-                showNotification({
-                    title: "Member found",
-                    description: `Welcome, ${userData.full_name}!`,
-                    variant: "success",
-                    position: "center",
-                })
-            } else {
-                setMemberFound(false)
-                setMemberData(null)
-                showNotification({
-                    title: "Member not found",
-                    description: "We couldn't find a member with that phone number",
-                    variant: "error",
-                    position: "center",
-                })
+            setIsCheckingMember(true);
+            try {
+                const result = await findUserByPhone(phone);
+                if (result.success && result.userData) {
+                    setMemberFound(true);
+                    setMemberData(result.userData);
+                    // Use setTimeout to ensure the notification is shown in the next tick
+                    setTimeout(() => {
+                        showNotification({
+                            title: "Member found",
+                            description: `Welcome, ${result.userData?.full_name || "Member"}!`,
+                            variant: "success",
+                            position: "center",
+                            duration: 3000
+                        });
+                    }, 0);
+                } else {
+                    setMemberFound(false);
+                    setMemberData(null);
+                    setTimeout(() => {
+                        showNotification({
+                            title: "Member not found",
+                            description: "We couldn't find a member with that phone number",
+                            variant: "error",
+                            position: "center",
+                            duration: 3000
+                        });
+                    }, 0);
+                }
+            } catch (err) {
+                console.error("Error checking member:", err);
+                setMemberFound(false);
+                setMemberData(null);
+                setTimeout(() => {
+                    showNotification({
+                        title: "Error",
+                        description: "An error occurred while checking membership. Please try again.",
+                        variant: "error",
+                        position: "center",
+                        duration: 3000
+                    });
+                }, 0);
+            } finally {
+                setIsCheckingMember(false);
             }
-        } catch (err) {
-            showNotification({
-                title: "Error",
-                description: "An error occurred while checking membership",
-                variant: "error",
-                position: "center",
-            })
-        } finally {
-            setIsCheckingMember(false)
-        }
-    }
+        }, 500),
+        [showNotification]
+    );
+
+    // Cleanup debounce on unmount
+    useEffect(() => {
+        return () => {
+            checkMember.cancel();
+        };
+    }, [checkMember]);
 
     // Handle phone number change for member check
     useEffect(() => {
         const subscription = form.watch((value, { name }) => {
             if (isMember && name === "phone_number") {
-                const phone = value.phone_number as string
-                if (phone && phone.length >= 10) {
-                    checkMember(phone)
-                }
+                checkMember(value.phone_number as string);
             }
-        })
-        return () => subscription.unsubscribe()
-    }, [form, isMember])
+        });
+        return () => subscription.unsubscribe();
+    }, [form, isMember, checkMember]);
 
     async function onSubmit(data: CampRegistrationValues) {
-        setIsSubmitting(true)
+        setIsSubmitting(true);
         try {
-            // // For members, use the member data we retrieved
-            // let registrationData = data
-            let registrationData;
+            let registrationData: RegistrationInput;
 
             if (data.attendee_type === "MEMBER") {
                 if (!memberFound || !memberData) {
@@ -169,41 +141,45 @@ export function CampRegistrationForm() {
                         description: "Please verify your phone number or register as a visitor",
                         variant: "error",
                         position: "center",
-                    })
-                    setIsSubmitting(false)
-                    return
+                    });
+                    setIsSubmitting(false);
+                    return;
                 }
-                // console.log("Registration", registrationData)
-                // Combine member data with form data
+
                 registrationData = {
                     ...data,
                     full_name: memberData.full_name,
                     email: memberData.email,
                     gender: memberData.gender,
                     branch: memberData.branch,
-                }
+                } as RegistrationInput;
+            } else {
+                registrationData = data;
             }
 
-            if (!registrationData) {
-                throw new Error("Registration data is undefined");
-            }
             const result = await registerForCamp(registrationData);
 
             if (result.success) {
-                showNotification({
-                    title: "Registration successful",
-                    description: "You have been registered for the camp!",
-                    variant: "success",
-                    position: "center",
-                })
-                router.push(`/camp-registration/success?id=${result.registrationId}`)
+                // // Create a registration data object to pass to the success page
+                // const successData = {
+                //     ...registrationData,
+                //     id: result.registrationId,
+                //     created_at: new Date().toISOString()
+                // };
+                
+                // Encode the data for URL
+                const encodedData = encodeURIComponent(JSON.stringify(result.data));
+                
+                // Navigate to success page with the data
+                router.push(`/camp-registration/success?data=${encodedData}`);
             } else {
                 showNotification({
                     title: "Registration failed",
                     description: result.error || "Failed to register for camp",
                     variant: "error",
                     position: "center",
-                })
+                });
+                setIsSubmitting(false);
             }
         } catch (error) {
             showNotification({
@@ -219,6 +195,7 @@ export function CampRegistrationForm() {
 
     return (
         <>
+            <NotificationContainer />
             <div className="mb-6">
                 <div className="flex items-center space-x-2 mb-4">
                     <Checkbox id="isMember" checked={isMember} onCheckedChange={(checked) => setIsMember(checked === true)} />
@@ -488,7 +465,6 @@ export function CampRegistrationForm() {
                     </motion.div>
                 </form>
             </Form>
-            <NotificationContainer />
         </>
     )
 }
