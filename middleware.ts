@@ -4,9 +4,6 @@ import { NextResponse, type NextRequest } from "next/server"
 export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url)
 
-  console.log('Cookies', request.headers.get('cookie'))
-
-
   // Skip middleware for .well-known and other non-application routes
   if (requestUrl.pathname.startsWith('/.well-known/') ||
     requestUrl.pathname.startsWith('/_next/') ||
@@ -33,15 +30,10 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    // If the user is not signed in and the current path is under /admin, redirect to /admin
-    console.log('Session', session)
-    console.log('Session', requestUrl.pathname)
-    console.log('Session', requestUrl)
-    console.log('Session', session == null && requestUrl.pathname.startsWith('/admin'))
-    if (!session && requestUrl.pathname.startsWith('/admin')) {
+    // If the user is not signed in and the current path is under /admin but not the login page
+    if (!session && requestUrl.pathname.startsWith('/admin') && requestUrl.pathname !== '/admin') {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
-
 
     // If the user is signed in and the current path is /admin, redirect to /admin/dashboard
     if (session && requestUrl.pathname === '/admin') {
