@@ -25,11 +25,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [])
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Members", href: "/dashboard/members", icon: Users },
-    { name: "Update Requests", href: "/dashboard/update-requests", icon: ClipboardEdit },
-    { name: "Camp Registrations", href: "/dashboard/camp-registrations", icon: Tent },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Members", href: "/admin/members", icon: Users },
+    { name: "Update Requests", href: "/admin/update-requests", icon: ClipboardEdit },
+    { name: "Camp Registrations", href: "/admin/camp-registrations", icon: Tent },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
   ]
 
   const closeMobileMenu = () => {
