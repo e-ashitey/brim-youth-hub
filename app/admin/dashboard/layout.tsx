@@ -34,10 +34,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Members", href: "/admin/members", icon: Users },
-    { name: "Update Requests", href: "/admin/update-requests", icon: ClipboardEdit },
-    { name: "Camp Registrations", href: "/admin/camp-registrations", icon: Tent },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "Members", href: "/admin/dashboard/members", icon: Users },
+    { name: "Update Requests", href: "/admin/dashboard/update-requests", icon: ClipboardEdit },
+    { name: "Camp Registrations", href: "/admin/dashboard/camp-registrations", icon: Tent },
+    { name: "Settings", href: "/admin/dashboard/settings", icon: Settings },
   ]
 
   if (isLoading) {
