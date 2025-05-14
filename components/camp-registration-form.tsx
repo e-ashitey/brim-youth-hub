@@ -138,19 +138,9 @@ export function CampRegistrationForm() {
 
             const result = await registerForCamp(registrationData);
 
-            if (result.success) {
-                // // Create a registration data object to pass to the success page
-                // const successData = {
-                //     ...registrationData,
-                //     id: result.registrationId,
-                //     created_at: new Date().toISOString()
-                // };
-                
-                // Encode the data for URL
-                const encodedData = encodeURIComponent(JSON.stringify(result.data));
-                
-                // Navigate to success page with the data
-                router.push(`/camp-registration/success?data=${encodedData}`);
+            if (result.success && result.data) {
+                // Navigate to success page with just the registration ID
+                router.push(`/camp-registration/success?id=${result.data.id}`);
             } else {
                 showNotification({
                     title: "Registration failed",
