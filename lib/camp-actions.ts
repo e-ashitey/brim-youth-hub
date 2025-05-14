@@ -43,7 +43,13 @@ export async function registerForCamp(data: RegistrationInput) {
         }
 
         revalidatePath("/camp-registration")
-        return { success: true, data: registration }
+        return { 
+            success: true, 
+            data: {
+                id: registration.id,
+                attendance_date: registration.attendance_date
+            } 
+        }
     } catch (error: any) {
         console.error("Error registering for camp:", error)
         return { success: false, error: error.message || "An error occurred" }
