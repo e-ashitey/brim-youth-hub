@@ -26,7 +26,7 @@ type CampRegistration = {
   email: string
   phone_number: string
   gender: string
-  attendee_type: "VISITOR" | "MEMBER"
+  attendee_type: "Visitor" | "Member"
   branch: string
   attendance_date: string
   emergency_contact_name?: string
@@ -50,13 +50,20 @@ export default function CampRegistrationsPage() {
   const [filteredRegistrations, setFilteredRegistrations] = useState<CampRegistration[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState("all")
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const availableYears = ["2023", "2025"]
+  const [selectedYear, setSelectedYear] = useState<string>(availableYears.at(-1 ) || "")
   const { showNotification } = useNotification()
 
-  const fetchRegistrations = async () => {
+  const fetchRegistrations = async (year?: string) => {
+    setIsLoading(true);
+
+    if (!year && !selectedYear) return;
+    const targetYear = year || selectedYear;
+    
     try {
       const { data, error } = await supabase
-        .from('camp_2025')
+        .from(`camp_${targetYear}`)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -78,13 +85,19 @@ export default function CampRegistrationsPage() {
   };
 
   useEffect(() => {
-    fetchRegistrations();
-  }, []);
+    if (selectedYear) {
+      fetchRegistrations(selectedYear);
+    }
+  }, [selectedYear]);
 
-  const handleCheckIn = async (id: string) => {
+  const handleCheckIn = async (id: string) => {    
+    if (!selectedYear) return;
+
+    setIsLoading(true);
+    
     try {
       const { error } = await supabase
-        .from('camp_2025')
+        .from(`camp_${selectedYear}`)
         .update({ 
           attended: true,
         })
@@ -155,6 +168,9 @@ export default function CampRegistrationsPage() {
     })
   }
 
+  const currentYear: string = new Date().getFullYear().toString();
+  const isCurrentYear = selectedYear === currentYear;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -192,6 +208,24 @@ export default function CampRegistrationsPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex gap-4">
+              <Select
+                value={selectedYear}
+                onValueChange={setSelectedYear}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="w-[180px]">
+                  {selectedYear ? `Camp ${selectedYear}` : 'Select Year'}
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year}>
+                      Camp {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -227,8 +261,12 @@ export default function CampRegistrationsPage() {
                   <TableHead>Contact</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {isCurrentYear && (
+                    <>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                    </>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -247,26 +285,29 @@ export default function CampRegistrationsPage() {
                         <Badge
                           variant="outline"
                           className={
-                            registration.attendee_type === "MEMBER"
+                            registration.attendee_type === "Member"
                               ? "bg-blue-100 text-blue-800 border-blue-300"
                               : "bg-purple-100 text-purple-800 border-purple-300"
                           }
                         >
-                          {registration.attendee_type === "MEMBER" ? "Member" : "Visitor"}
+                          {registration.attendee_type}
                         </Badge>
                       </TableCell>
                       <TableCell>{formatDate(registration.attendance_date)}</TableCell>
                       <TableCell>
-                        {registration.attended ? (
-                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                            Checked In
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                            Not Checked In
-                          </Badge>
-                        )}
+                        {selectedYear === String(new Date().getFullYear()) ? (
+                          registration.attended ? (
+                            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                              Checked In
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                              Not Checked In
+                            </Badge>
+                          )
+                        ) : null}
                       </TableCell>
+                      {isCurrentYear && (
                       <TableCell className="text-right">
                         {!registration.attended ? (
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -298,6 +339,7 @@ export default function CampRegistrationsPage() {
                           </DropdownMenu>
                         )}
                       </TableCell>
+                      )}
                     </TableRow>
                   ))
                 ) : (
