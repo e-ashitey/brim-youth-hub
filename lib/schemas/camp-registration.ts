@@ -13,7 +13,7 @@ export interface RegistrationInput {
     email: string
     phone_number: string
     gender: string
-    attendee_type: "VISITOR" | "MEMBER"
+    attendee_type: "Visitor" | "Member"
     branch: string
     attendance_date: string
     emergency_contact_name?: string
@@ -29,7 +29,7 @@ export const visitorSchema = z.object({
     attendance_date: z.string().min(1, { message: "Please select which day you will attend" }),
     emergency_contact_name: z.string().optional(),
     emergency_contact_number: z.string().optional(),
-    attendee_type: z.literal("VISITOR"),
+    attendee_type: z.literal("Visitor"),
 })
 
 export const memberSchema = z.object({
@@ -37,7 +37,7 @@ export const memberSchema = z.object({
     attendance_date: z.string().min(1, { message: "Please select which day you will attend" }),
     emergency_contact_name: z.string().optional(),
     emergency_contact_number: z.string().optional(),
-    attendee_type: z.literal("MEMBER"),
+    attendee_type: z.literal("Member"),
 })
 
 export const campRegistrationSchema = z.discriminatedUnion("attendee_type", [
@@ -48,7 +48,7 @@ export const campRegistrationSchema = z.discriminatedUnion("attendee_type", [
 export type CampRegistrationValues = z.infer<typeof campRegistrationSchema>
 
 export const DEFAULT_VISITOR_VALUES: CampRegistrationValues = {
-    attendee_type: "VISITOR",
+    attendee_type: "Visitor",
     full_name: "",
     email: "",
     phone_number: "",
@@ -60,7 +60,7 @@ export const DEFAULT_VISITOR_VALUES: CampRegistrationValues = {
 }
 
 export const DEFAULT_MEMBER_VALUES: CampRegistrationValues = {
-    attendee_type: "MEMBER",
+    attendee_type: "Member",
     phone_number: "",
     attendance_date: "",
     emergency_contact_name: "",

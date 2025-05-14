@@ -9,7 +9,7 @@ interface RegistrationInput {
     email: string
     phone_number: string
     gender: string
-    attendee_type: "VISITOR" | "MEMBER"
+    attendee_type: "Visitor" | "Member"
     branch: string
     attendance_date: string
     emergency_contact_name?: string

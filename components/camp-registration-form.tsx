@@ -113,7 +113,7 @@ export function CampRegistrationForm() {
         try {
             let registrationData: RegistrationInput;
 
-            if (data.attendee_type === "MEMBER") {
+            if (data.attendee_type === "Member") {
                 if (!memberFound || !memberData) {
                     showNotification({
                         title: "Member not found",
