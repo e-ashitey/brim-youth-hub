@@ -79,12 +79,12 @@ export default function LoginPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between">
+                                {/* <div className="flex items-center justify-between">
                                     <Label htmlFor="password">Password</Label>
                                     <a href="#" className="text-xs text-orange-500 hover:underline">
                                         Forgot password?
                                     </a>
-                                </div>
+                                </div> */}
                                 <Input
                                     id="password"
                                     type="password"
@@ -105,11 +105,11 @@ export default function LoginPage() {
                             </motion.div>
                         </form>
                     </CardContent>
-                    <CardFooter className="flex flex-col">
+                    {/* <CardFooter className="flex flex-col">
                         <p className="mt-2 text-xs text-center text-muted-foreground">
-                            <span>Demo credentials: admin@example.com / password</span>
+                            <span>SAFE AND SECURE!!</span>
                         </p>
-                    </CardFooter>
+                    </CardFooter> */}
                 </Card>
             </motion.div>
             <NotificationContainer />
