@@ -52,15 +52,15 @@ export default function CampRegistrationsPage() {
   const [dateFilter, setDateFilter] = useState("all")
   const [isLoading, setIsLoading] = useState(false)
   const availableYears = ["2023", "2025"]
-  const [selectedYear, setSelectedYear] = useState<string>(availableYears.at(-1 ) || "")
-  const { showNotification } = useNotification()
+  const [selectedYear, setSelectedYear] = useState<string>(availableYears.at(-1) || "")
+  const { showNotification, NotificationContainer } = useNotification()
 
   const fetchRegistrations = async (year?: string) => {
     setIsLoading(true);
 
     if (!year && !selectedYear) return;
     const targetYear = year || selectedYear;
-    
+
     try {
       const { data, error } = await supabase
         .from(`camp_${targetYear}`)
@@ -90,15 +90,15 @@ export default function CampRegistrationsPage() {
     }
   }, [selectedYear]);
 
-  const handleCheckIn = async (id: string) => {    
+  const handleCheckIn = async (id: string) => {
     if (!selectedYear) return;
 
     setIsLoading(true);
-    
+
     try {
       const { error } = await supabase
         .from(`camp_${selectedYear}`)
-        .update({ 
+        .update({
           attended: true,
         })
         .eq('id', id);
@@ -106,17 +106,17 @@ export default function CampRegistrationsPage() {
       if (error) throw error;
 
       // Update local state
-      setRegistrations(prev => 
-        prev.map(reg => 
-          reg.id === id 
-            ? { ...reg, attended: true, attended_at: new Date().toISOString() } 
+      setRegistrations(prev =>
+        prev.map(reg =>
+          reg.id === id
+            ? { ...reg, attended: true, attended_at: new Date().toISOString() }
             : reg
         )
       );
-      setFilteredRegistrations(prev => 
-        prev.map(reg => 
-          reg.id === id 
-            ? { ...reg, attended: true, attended_at: new Date().toISOString() } 
+      setFilteredRegistrations(prev =>
+        prev.map(reg =>
+          reg.id === id
+            ? { ...reg, attended: true, attended_at: new Date().toISOString() }
             : reg
         )
       );
@@ -135,6 +135,59 @@ export default function CampRegistrationsPage() {
         variant: "error",
         position: "topRight",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelCheckIn = async (id: string) => {
+    if (!selectedYear) return;
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from(`camp_${selectedYear}`)
+        .update({
+          attended: false,
+        })
+        .eq('id', id);
+
+
+      if (error) throw error;
+
+      // Update local state
+      setRegistrations(prev =>
+        prev.map(reg =>
+          reg.id === id
+            ? { ...reg, attended: false, attended_at: '' }
+            : reg
+        )
+      );
+      setFilteredRegistrations(prev =>
+        prev.map(reg =>
+          reg.id === id
+            ? { ...reg, attended: false, attended_at: '' }
+            : reg
+        )
+      );
+
+      showNotification({
+        title: "Success",
+        description: "Check-in cancelled successfully",
+        variant: "success",
+        position: "topRight",
+      });
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      showNotification({
+        title: "Error",
+        description: "Failed to cancel check-in",
+        variant: "error",
+        position: "topRight",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -180,180 +233,188 @@ export default function CampRegistrationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Camp Registrations</h1>
-          <p className="text-muted-foreground">Manage and track camp attendees.</p>
-        </div>
-        <div className="flex gap-2">
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export Attendee List
-            </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
-              Generate QR Codes
-            </Button>
-          </motion.div>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Camp Attendees</CardTitle>
-          <CardDescription>View and manage camp registrations and check-ins.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex gap-4">
-              <Select
-                value={selectedYear}
-                onValueChange={setSelectedYear}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="w-[180px]">
-                  {selectedYear ? `Camp ${selectedYear}` : 'Select Year'}
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year}>
-                      Camp {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or phone..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <div className="flex items-center">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <span>Date</span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Dates</SelectItem>
-                  <SelectItem value="August 14, 2024">August 14, 2024</SelectItem>
-                  <SelectItem value="August 15, 2024">August 15, 2024</SelectItem>
-                  <SelectItem value="August 16, 2024">August 16, 2024</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <>
+      <NotificationContainer />
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Camp Registrations</h1>
+            <p className="text-muted-foreground">Manage and track camp attendees.</p>
           </div>
+          <div className="flex gap-2">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export Attendee List
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
+                Generate QR Codes
+              </Button>
+            </motion.div>
+          </div>
+        </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Attendee</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Date</TableHead>
-                  {isCurrentYear && (
-                    <>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                    </>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRegistrations.length > 0 ? (
-                  filteredRegistrations.map((registration) => (
-                    <TableRow key={registration.id}>
-                      <TableCell>
-                        <div className="font-medium">{registration.full_name}</div>
-                        <div className="text-xs text-muted-foreground">{registration.branch}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{registration.email}</div>
-                        <div className="text-xs text-muted-foreground">{registration.phone_number}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            registration.attendee_type === "Member"
-                              ? "bg-blue-100 text-blue-800 border-blue-300"
-                              : "bg-purple-100 text-purple-800 border-purple-300"
-                          }
-                        >
-                          {registration.attendee_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(registration.attendance_date)}</TableCell>
-                      <TableCell>
-                        {selectedYear === String(new Date().getFullYear()) ? (
-                          registration.attended ? (
-                            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                              Checked In
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                              Not Checked In
-                            </Badge>
-                          )
-                        ) : null}
-                      </TableCell>
-                      {isCurrentYear && (
-                      <TableCell className="text-right">
-                        {!registration.attended ? (
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-green-600 border-green-600 hover:bg-green-50"
-                              onClick={() => handleCheckIn(registration.id)}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Check In
-                            </Button>
-                          </motion.div>
-                        ) : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem>View Details</DropdownMenuItem>
-                              <DropdownMenuItem>Print Badge</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">Cancel Check-in</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Camp Attendees</CardTitle>
+            <CardDescription>View and manage camp registrations and check-ins.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="flex gap-4">
+                <Select
+                  value={selectedYear}
+                  onValueChange={setSelectedYear}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    {selectedYear ? `Camp ${selectedYear}` : 'Select Year'}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year}>
+                        Camp {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or phone..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <div className="flex items-center">
+                      <Filter className="mr-2 h-4 w-4" />
+                      <span>Date</span>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    <SelectItem value="August 14, 2024">August 14, 2024</SelectItem>
+                    <SelectItem value="August 15, 2024">August 15, 2024</SelectItem>
+                    <SelectItem value="August 16, 2024">August 16, 2024</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                      No registrations found. Try adjusting your filters.
-                    </TableCell>
+                    <TableHead>Attendee</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Date</TableHead>
+                    {isCurrentYear && (
+                      <>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </>
+                    )}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredRegistrations.length > 0 ? (
+                    filteredRegistrations.map((registration) => (
+                      <TableRow key={registration.id}>
+                        <TableCell>
+                          <div className="font-medium">{registration.full_name}</div>
+                          <div className="text-xs text-muted-foreground">{registration.branch}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{registration.email}</div>
+                          <div className="text-xs text-muted-foreground">{registration.phone_number}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={registration.attendee_type === "Member"
+                              ? "bg-blue-100 text-blue-800 border-blue-300"
+                              : "bg-purple-100 text-purple-800 border-purple-300"}
+                          >
+                            {registration.attendee_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatDate(registration.attendance_date)}</TableCell>
+                        <TableCell>
+                          {selectedYear === String(new Date().getFullYear()) ? (
+                            registration.attended ? (
+                              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                                Checked In
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                Not Checked In
+                              </Badge>
+                            )
+                          ) : null}
+                        </TableCell>
+                        {isCurrentYear && (
+                          <TableCell className="text-right">
+                            {!registration.attended ? (
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                  onClick={() => handleCheckIn(registration.id)}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Check In
+                                </Button>
+                              </motion.div>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Open menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuItem>View Details</DropdownMenuItem>
+                                  <DropdownMenuItem>Print Badge</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={async () => {
+                                      if (confirm('Are you sure you want to cancel this check-in?')) {
+                                        await handleCancelCheckIn(registration.id)
+                                      }
+                                    }}
+                                  >
+                                    Cancel Check-in
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                        No registrations found. Try adjusting your filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div></>
   )
 }
